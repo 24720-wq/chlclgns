@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ChatGPT 질문 답변 페이지</title>
+  <title>스마트 AI 민원 안내 도우미</title>
   <style>
     * {
       box-sizing: border-box;
@@ -12,65 +12,112 @@
     body {
       margin: 0;
       min-height: 100vh;
-      background: linear-gradient(135deg, #e3f2fd, #fce4ec);
-      font-family: Arial, sans-serif;
-      color: #333;
+      background: linear-gradient(135deg, #f0f4f8, #e2e8f0);
+      font-family: 'Malgun Gothic', dotum, sans-serif;
+      color: #1a202c;
     }
 
     .container {
-      width: min(900px, 92%);
-      margin: 40px auto;
+      width: min(1000px, 94%);
+      margin: 30px auto;
       background: #ffffff;
-      border-radius: 24px;
-      padding: 28px;
-      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.16);
+      border-radius: 20px;
+      padding: 32px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+    }
+
+    /* 헤더 스타일 (주제 반영) */
+    header {
+      text-align: center;
+      margin-bottom: 24px;
+      border-bottom: 2px solid #edf2f7;
+      padding-bottom: 20px;
     }
 
     h1 {
-      margin: 0 0 8px;
-      text-align: center;
+      margin: 0 0 6px;
       font-size: 28px;
+      color: #1a365d;
     }
 
     .subtitle {
-      text-align: center;
-      color: #777;
+      color: #4a5568;
+      font-size: 15px;
+    }
+
+    /* 인증(로그인) 영역 */
+    .auth-section {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 16px;
       margin-bottom: 24px;
+      display: flex;
+      justify-content: dashed;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .auth-input {
+      padding: 8px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
       font-size: 14px;
     }
 
-    .info {
-      padding: 14px;
-      margin-bottom: 20px;
-      border-radius: 14px;
-      background: #e8f5e9;
-      color: #2e7d32;
+    .user-info {
+      font-weight: bold;
+      color: #2b6cb0;
+    }
+
+    /* 가이드 배너 */
+    .info-banner {
+      padding: 14px 18px;
+      margin-bottom: 24px;
+      border-radius: 12px;
+      background: #ebf8ff;
+      border-left: 5px solid #3182ce;
+      color: #2b6cb0;
       font-size: 14px;
       line-height: 1.6;
+    }
+
+    /* 메인 서비스 레이아웃 (로그인 전 숨김) */
+    .main-content {
+      display: none; /* 인증 성공 시 block으로 전환 */
     }
 
     .chat-box {
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 16px;
+    }
+
+    .label {
+      font-weight: bold;
+      margin-bottom: 8px;
+      color: #2d3748;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
     textarea {
       width: 100%;
-      min-height: 140px;
+      min-height: 120px;
       resize: vertical;
       padding: 16px;
-      border: 1px solid #ddd;
-      border-radius: 16px;
+      border: 1px solid #cbd5e1;
+      border-radius: 12px;
       font-size: 16px;
       line-height: 1.5;
       outline: none;
-      font-family: Arial, sans-serif;
     }
 
     textarea:focus {
-      border-color: #42a5f5;
-      box-shadow: 0 0 0 3px rgba(66, 165, 245, 0.15);
+      border-color: #3182ce;
+      box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.15);
     }
 
     .button-row {
@@ -82,17 +129,17 @@
 
     button {
       border: none;
-      border-radius: 12px;
-      padding: 0 18px;
-      height: 46px;
-      font-size: 15px;
+      border-radius: 8px;
+      padding: 0 20px;
+      height: 44px;
+      font-size: 14px;
       cursor: pointer;
-      transition: 0.15s;
+      transition: all 0.15s;
       font-weight: bold;
     }
 
     button:hover {
-      transform: translateY(-2px);
+      transform: translateY(-1px);
       opacity: 0.9;
     }
 
@@ -102,157 +149,354 @@
       transform: none;
     }
 
-    .ask-btn {
-      background: #42a5f5;
-      color: white;
-    }
-
-    .clear-btn {
-      background: #b0bec5;
-      color: white;
-    }
+    .btn-primary { background: #3182ce; color: white; }
+    .btn-secondary { background: #718096; color: white; }
+    .btn-success { background: #38a169; color: white; }
+    .btn-danger { background: #e53e3e; color: white; }
 
     .answer-box {
-      min-height: 220px;
-      padding: 18px;
-      border-radius: 18px;
-      background: #f7f9fb;
-      border: 1px solid #edf1f5;
+      min-height: 180px;
+      padding: 20px;
+      border-radius: 12px;
+      background: #f7fafc;
+      border: 1px solid #e2e8f0;
       line-height: 1.7;
       white-space: pre-wrap;
       word-break: break-word;
+      font-size: 15px;
     }
 
     .status {
-      min-height: 24px;
-      color: #555;
+      min-height: 20px;
+      color: #4a5568;
+      font-size: 13px;
+      font-style: italic;
+    }
+
+    /* 데이터 연동: 최근 민원 내역 리스트 스타일 */
+    .history-section {
+      margin-top: 32px;
+      border-top: 2px dashed #e2e8f0;
+      padding-top: 24px;
+    }
+
+    .history-item {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 10px;
       font-size: 14px;
     }
 
-    .label {
-      font-weight: bold;
-      margin-bottom: 6px;
-    }
-
-    .help {
-      margin-top: 12px;
-      font-size: 13px;
-      color: #777;
-      line-height: 1.6;
-    }
+    .history-q { font-weight: bold; color: #4a5568; margin-bottom: 4px; }
+    .history-a { color: #718096; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
     @media (max-width: 700px) {
-      .button-row {
-        justify-content: stretch;
-      }
-
-      button {
-        width: 100%;
-      }
+      .auth-section { flex-direction: column; align-items: stretch; }
+      .button-row button { width: 100%; }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>ChatGPT 질문 답변</h1>
-    <div class="subtitle">GitHub Pages + Google Apps Script + OpenAI API 연동</div>
+    <header>
+      <h1>🏛️ 스마트 AI 민원 안내 도우미</h1>
+      <div class="subtitle">지능형 행정 민원 상담 및 서류 안내 시스템</div>
+    </header>
 
-    <div class="info">
-      현재 구조: GitHub Pages 화면 → Google Apps Script 서버 → OpenAI API → 답변 반환<br />
-      API Key는 index.html에 들어가지 않고 Apps Script의 스크립트 속성에 저장됩니다.
+    <div class="auth-section" id="authSection">
+      <div id="loggedOutForm" style="display: flex; gap: 8px; flex-wrap: wrap; width: 100%;">
+        <input type="email" id="authEmail" class="auth-input" placeholder="이메일 주소" />
+        <input type="password" id="authPassword" class="auth-input" placeholder="비밀번호" />
+        <button class="btn-primary" id="loginBtn">로그인</button>
+        <button class="btn-secondary" id="signUpBtn">회원가입</button>
+      </div>
+      <div id="loggedInForm" style="display: none; justify-content: space-between; width: 100%; align-items: center;">
+        <div>👤 안녕하세요, <span id="userDisplay" class="user-info">사용자</span>님. 민원 서비스를 이용하실 수 있습니다.</div>
+        <button class="btn-danger" id="logoutBtn">로그아웃</button>
+      </div>
     </div>
 
-    <div class="chat-box">
-      <div>
-        <div class="label">질문</div>
-        <textarea id="questionInput" placeholder="질문을 입력하세요. 예: 고등학생에게 파이썬 반복문을 쉽게 설명해줘."></textarea>
-      </div>
+    <div class="info-banner">
+      💡 본 도우미는 여권 발급, 주민등록 등초본, 대형폐기물 신고 등 복잡한 행정 민원 절차 및 구비 서류를 AI 기반으로 친절하게 안내해 드립니다. 서비스를 이용하시려면 로그인이 필요합니다.
+    </div>
 
-      <div class="button-row">
-        <button class="clear-btn" id="clearBtn">초기화</button>
-        <button class="ask-btn" id="askBtn">질문하기</button>
-      </div>
+    <div class="main-content" id="mainContent">
+      <div class="chat-box">
+        <div>
+          <div class="label">📝 민원 질의 입력</div>
+          <textarea id="questionInput" placeholder="궁금하신 민원 내용을 입력하세요. &#10;예: 여권 재발급 시 준비물과 수수료 알려줘. &#10;예: 주택용 소방시설 설치 기준이 어떻게 되나요?"></textarea>
+        </div>
 
-      <div id="status" class="status"></div>
+        <div class="button-row">
+          <button class="btn-secondary" id="clearBtn">초기화</button>
+          <button class="btn-primary" id="askBtn">민원 조회하기</button>
+          <button class="btn-success" id="ttsBtn" disabled>🔊 음성으로 안내 받기</button>
+        </div>
 
-      <div>
-        <div class="label">답변</div>
-        <div id="answerBox" class="answer-box">아직 답변이 없습니다.</div>
-      </div>
+        <div id="status" class="status"></div>
 
-      <div class="help">
-        단축키: 질문 입력창에서 Ctrl + Enter를 누르면 질문이 전송됩니다.<br />
-        오류가 발생하면 Apps Script 배포 권한이 “모든 사용자”인지 확인하세요.
+        <div>
+          <div class="label">🤖 AI 민원 안내 답변</div>
+          <div id="answerBox" class="answer-box">원하시는 민원 상담 내용을 입력 후 조회 버튼을 눌러주세요.</div>
+        </div>
+
+        <div class="history-section">
+          <div class="label">📂 나의 최근 민원 상담 내역</div>
+          <div id="historyList">
+            <p style="color: #94a3b8; font-size: 14px;">저장된 상담 내역이 없습니다.</p>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
 
-  <script>
+  <script type="module">
+    // Firebase v10 SDK 라이브러리 로드
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getFirestore, collection, addDoc, query, where, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    // ⚠️ [필수] 본인의 Firebase 프로젝트 설정값으로 대체하세요!
+    const firebaseConfig = {
+      apiKey: "YOUR_FIREBASE_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    // [기존 인프라 유지] Google Apps Script 웹앱 URL
     const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbydpPxwPnuUQtQnqo9bj49Zkyi5_xVB1yzl2VoYoFVnHyyl2-hB4WU_Ukkl-c7xlpH3Ww/exec';
+
+    // 서비스 초기화
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let currentUser = null;
+
+    // DOM 요소 캐싱
+    const authEmail = document.getElementById('authEmail');
+    const authPassword = document.getElementById('authPassword');
+    const loginBtn = document.getElementById('loginBtn');
+    const signUpBtn = document.getElementById('signUpBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const loggedOutForm = document.getElementById('loggedOutForm');
+    const loggedInForm = document.getElementById('loggedInForm');
+    const userDisplay = document.getElementById('userDisplay');
+    const mainContent = document.getElementById('mainContent');
 
     const questionInput = document.getElementById('questionInput');
     const answerBox = document.getElementById('answerBox');
     const statusBox = document.getElementById('status');
     const askBtn = document.getElementById('askBtn');
     const clearBtn = document.getElementById('clearBtn');
+    const ttsBtn = document.getElementById('ttsBtn');
+    const historyList = document.getElementById('historyList');
 
+    // 이벤트 리스너 연결
+    loginBtn.addEventListener('click', handleLogin);
+    signUpBtn.addEventListener('click', handleSignUp);
+    logoutBtn.addEventListener('click', handleLogout);
     askBtn.addEventListener('click', askChatGPT);
     clearBtn.addEventListener('click', clearPage);
+    ttsBtn.addEventListener('click', speakAnswer);
 
-    questionInput.addEventListener('keydown', function(event) {
-      if (event.key === 'Enter' && event.ctrlKey) {
-        askChatGPT();
+    questionInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && e.ctrlKey) askChatGPT();
+    });
+
+    // ==========================================
+    // 3. Firebase Authentication (인증 로직)
+    // ==========================================
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        currentUser = user;
+        userDisplay.textContent = user.email.split('@')[0];
+        loggedOutForm.style.display = 'none';
+        loggedInForm.style.display = 'flex';
+        mainContent.style.display = 'block';
+        loadComplaintHistory(); // 로그인 완료 시 데이터 불러오기
+      } else {
+        currentUser = null;
+        loggedOutForm.style.display = 'flex';
+        loggedInForm.style.display = 'none';
+        mainContent.style.display = 'none';
+        clearPage();
       }
     });
 
+    async function handleLogin() {
+      const email = authEmail.value.trim();
+      const password = authPassword.value;
+      if(!email || !password) return alert('이메일과 비밀번호를 입력하세요.');
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+      } catch (error) {
+        alert('로그인 실패: ' + error.message);
+      }
+    }
+
+    async function handleSignUp() {
+      const email = authEmail.value.trim();
+      const password = authPassword.value;
+      if(!email || !password) return alert('이메일과 비밀번호를 입력하세요.');
+      try {
+        await createUserWithEmailAndPassword(auth, email, password);
+        alert('회원가입이 완료되었습니다!');
+      } catch (error) {
+        alert('회원가입 실패: ' + error.message);
+      }
+    }
+
+    async function handleLogout() {
+      try {
+        await signOut(auth);
+      } catch (error) {
+        alert('로그아웃 실패: ' + error.message);
+      }
+    }
+
+    // ==========================================
+    // 4. 생성형 인공지능 연동 및 2. Firestore 데이터 저장
+    // ==========================================
     async function askChatGPT() {
       const question = questionInput.value.trim();
-
       if (!question) {
-        alert('질문을 입력해주세요.');
+        alert('민원 내용을 입력해주세요.');
         return;
       }
 
       try {
         setLoading(true);
-        answerBox.textContent = '답변을 생성하는 중입니다...';
-        statusBox.textContent = 'Apps Script 서버에 요청을 보내는 중입니다.';
+        ttsBtn.disabled = true; // 대답 생성 중엔 TTS 방지
+        answerBox.textContent = '민원 관련 규정 및 안내 내용을 분석하고 있습니다...';
+        statusBox.textContent = 'AI 민원 허브 서버와 통신 중입니다.';
 
+        // 기존 Apps Script 인프라로 요청 전달
         const response = await fetch(APPS_SCRIPT_URL, {
           method: 'POST',
-          body: JSON.stringify({
-            question: question
-          })
+          body: JSON.stringify({ question: `[행정 민원 안내] ${question}` }) // 프롬프트 가이드 추가
         });
 
         const data = await response.json();
+        if (data.error) throw new Error(data.error);
 
-        if (data.error) {
-          throw new Error(data.error);
+        const aiAnswer = data.answer || '답변을 가져오지 못했습니다.';
+        answerBox.textContent = aiAnswer;
+        statusBox.textContent = '민원 안내 완료';
+        ttsBtn.disabled = false; // TTS 활성화
+
+        // [2. 데이터 연동] Firestore에 성공한 상담 내역 저장
+        if (currentUser) {
+          await addDoc(collection(db, "civil_complaints"), {
+            uid: currentUser.uid,
+            question: question,
+            answer: aiAnswer,
+            createdAt: new Date()
+          });
+          loadComplaintHistory(); // 기록 갱신
         }
 
-        answerBox.textContent = data.answer || '답변을 가져오지 못했습니다.';
-        statusBox.textContent = '답변 생성 완료';
       } catch (error) {
         console.error(error);
-        answerBox.textContent = '오류가 발생했습니다.\n\n' + error.message;
+        answerBox.textContent = '민원 처리 중 오류가 발생했습니다.\n\n' + error.message;
         statusBox.textContent = '요청 실패';
       } finally {
         setLoading(false);
       }
     }
 
+    // ==========================================
+    // 2. Firebase 데이터 연동 (최근 내역 로드)
+    // ==========================================
+    async function loadComplaintHistory() {
+      if (!currentUser) return;
+      try {
+        // 내 uid에 해당하는 최근 5개의 민원 내역을 정렬하여 가져옴
+        const q = query(
+          collection(db, "civil_complaints"),
+          where("uid", "==", currentUser.uid),
+          orderBy("createdAt", "desc"),
+          limit(5)
+        );
+        const querySnapshot = await getDocs(q);
+        
+        if (querySnapshot.empty) {
+          historyList.innerHTML = '<p style="color: #94a3b8; font-size: 14px;">최근 상담 내역이 없습니다.</p>';
+          return;
+        }
+
+        historyList.innerHTML = '';
+        querySnapshot.forEach((doc) => {
+          const item = doc.data();
+          const div = document.createElement('div');
+          div.className = 'history-item';
+          div.innerHTML = `
+            <div class="history-q">Q. ${escapeHtml(item.question)}</div>
+            <div class="history-a">${escapeHtml(item.answer)}</div>
+          `;
+          // 클릭 시 해당 기록 복원 기능 추가 (사용자 편의성)
+          div.style.cursor = 'pointer';
+          div.addEventListener('click', () => {
+            questionInput.value = item.question;
+            answerBox.textContent = item.answer;
+            ttsBtn.disabled = false;
+          });
+          historyList.appendChild(div);
+        });
+      } catch (e) {
+        console.error("역사 로드 실패:", e);
+      }
+    }
+
+    // ==========================================
+    // 5. TTS 기능 활용하기 (Web Speech API)
+    // ==========================================
+    function speakAnswer() {
+      const textToRead = answerBox.textContent;
+      if (!textToRead || textToRead.startsWith('원하시는 민원') || textToRead.startsWith('민원 관련')) {
+        return;
+      }
+
+      if ('speechSynthesis' in window) {
+        // 기존 실행 중인 음성이 있으면 취소
+        window.speechSynthesis.cancel();
+
+        const utterance = new SpeechSynthesisUtterance(textToRead);
+        utterance.lang = 'ko-KR'; // 한국어 설정
+        utterance.rate = 1.0;     // 속도 기본값
+        utterance.pitch = 1.0;    // 음높이 기본값
+
+        window.speechSynthesis.speak(utterance);
+        statusBox.textContent = '🔊 음성 안내가 출력 중입니다.';
+      } else {
+        alert('이 브라우저는 음성 합성(TTS) 기능을 지원하지 않습니다. 크롬 등을 사용해 주세요.');
+      }
+    }
+
+    // 기타 보조 함수들
     function setLoading(isLoading) {
       askBtn.disabled = isLoading;
-      askBtn.textContent = isLoading ? '생성 중...' : '질문하기';
+      askBtn.textContent = isLoading ? '조회 중...' : '민원 조회하기';
     }
 
     function clearPage() {
       questionInput.value = '';
-      answerBox.textContent = '아직 답변이 없습니다.';
+      answerBox.textContent = '원하시는 민원 상담 내용을 입력 후 조회 버튼을 눌러주세요.';
       statusBox.textContent = '';
+      ttsBtn.disabled = true;
+      if(window.speechSynthesis) window.speechSynthesis.cancel();
+    }
+
+    function escapeHtml(str) {
+      if(!str) return '';
+      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
     }
   </script>
 </body>
 </html>
-
