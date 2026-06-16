@@ -26,7 +26,7 @@
       box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
     }
 
-    /* 헤더 스타일 (주제 반영) */
+    /* 헤더 스타일 */
     header {
       text-align: center;
       margin-bottom: 24px;
@@ -85,7 +85,7 @@
 
     /* 메인 서비스 레이아웃 (로그인 전 숨김) */
     .main-content {
-      display: none; /* 인증 성공 시 block으로 전환 */
+      display: none;
     }
 
     .chat-box {
@@ -254,30 +254,30 @@
   </div>
 
   <script type="module">
-    // Firebase v10 SDK 라이브러리 로드
+    // Firebase v10 SDK 라이브러리 로드 (Realtime Database용으로 변경)
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { getFirestore, collection, addDoc, query, where, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getDatabase, ref, push, query, orderByChild, equalTo, limitToLast, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-    // ⚠️ [필수] 본인의 Firebase 프로젝트 설정값으로 대체하세요!
-   const firebaseConfig = {
-  apiKey: "AIzaSyARaXh2BL0OJ_L9nRnO2lbwjyOIbxUqBu8",
-  authDomain: "wjswnsdndndn.firebaseapp.com",
-  databaseURL: "https://wjswnsdndndn-default-rtdb.firebaseio.com",
-  projectId: "wjswnsdndndn",
-  storageBucket: "wjswnsdndndn.firebasestorage.app",
-  messagingSenderId: "913439147850",
-  appId: "1:913439147850:web:45a74c2a1f7ac6309123b3",
-  measurementId: "G-5DSN386QJR"
-};
+    // Firebase 프로젝트 설정값
+    const firebaseConfig = {
+      apiKey: "AIzaSyARaXh2BL0OJ_L9nRnO2lbwjyOIbxUqBu8",
+      authDomain: "wjswnsdndndn.firebaseapp.com",
+      databaseURL: "https://wjswnsdndndn-default-rtdb.firebaseio.com",
+      projectId: "wjswnsdndndn",
+      storageBucket: "wjswnsdndndn.firebasestorage.app",
+      messagingSenderId: "913439147850",
+      appId: "1:913439147850:web:45a74c2a1f7ac6309123b3",
+      measurementId: "G-5DSN386QJR"
+    };
 
-    // [기존 인프라 유지] Google Apps Script 웹앱 URL
+    // Google Apps Script 웹앱 URL
     const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxbfjNznB0DmAbf-9lMuNnEET_16pFzi3JYcYXAXTTP-Nre9HhNCKsm20Hv2b9bb8v2/exec';
 
-    // 서비스 초기화
+    // 서비스 초기화 (Realtime Database 적용)
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
-    const db = getFirestore(app);
+    const db = getDatabase(app);
 
     let currentUser = null;
 
@@ -312,9 +312,7 @@
       if (e.key === 'Enter' && e.ctrlKey) askChatGPT();
     });
 
-    // ==========================================
-    // 3. Firebase Authentication (인증 로직)
-    // ==========================================
+    // Firebase Authentication (인증 로직)
     onAuthStateChanged(auth, (user) => {
       if (user) {
         currentUser = user;
@@ -322,7 +320,7 @@
         loggedOutForm.style.display = 'none';
         loggedInForm.style.display = 'flex';
         mainContent.style.display = 'block';
-        loadComplaintHistory(); // 로그인 완료 시 데이터 불러오기
+        loadComplaintHistory(); 
       } else {
         currentUser = null;
         loggedOutForm.style.display = 'flex';
@@ -363,9 +361,7 @@
       }
     }
 
-    // ==========================================
-    // 4. 생성형 인공지능 연동 및 2. Firestore 데이터 저장
-    // ==========================================
+    // AI 호출 및 Realtime Database 데이터 저장
     async function askChatGPT() {
       const question = questionInput.value.trim();
       if (!question) {
@@ -375,14 +371,13 @@
 
       try {
         setLoading(true);
-        ttsBtn.disabled = true; // 대답 생성 중엔 TTS 방지
+        ttsBtn.disabled = true;
         answerBox.textContent = '민원 관련 규정 및 안내 내용을 분석하고 있습니다...';
         statusBox.textContent = 'AI 민원 허브 서버와 통신 중입니다.';
 
-        // 기존 Apps Script 인프라로 요청 전달
         const response = await fetch(APPS_SCRIPT_URL, {
           method: 'POST',
-          body: JSON.stringify({ question: `[행정 민원 안내] ${question}` }) // 프롬프트 가이드 추가
+          body: JSON.stringify({ question: `[행정 민원 안내] ${question}` })
         });
 
         const data = await response.json();
@@ -391,17 +386,19 @@
         const aiAnswer = data.answer || '답변을 가져오지 못했습니다.';
         answerBox.textContent = aiAnswer;
         statusBox.textContent = '민원 안내 완료';
-        ttsBtn.disabled = false; // TTS 활성화
+        ttsBtn.disabled = false;
 
-        // [2. 데이터 연동] Firestore에 성공한 상담 내역 저장
+        // Realtime Database에 내역 저장
         if (currentUser) {
-          await addDoc(collection(db, "civil_complaints"), {
+          const complaintsRef = ref(db, 'civil_complaints');
+          await push(complaintsRef, {
             uid: currentUser.uid,
+            email: currentUser.email, // 내가 로그인한 이메일 기록
             question: question,
             answer: aiAnswer,
-            createdAt: new Date()
+            createdAt: ServerValueTimestamp() // 시간 기록용 함수 대체
           });
-          loadComplaintHistory(); // 기록 갱신
+          loadComplaintHistory(); 
         }
 
       } catch (error) {
@@ -413,36 +410,48 @@
       }
     }
 
-    // ==========================================
-    // 2. Firebase 데이터 연동 (최근 내역 로드)
-    // ==========================================
+    // 시간 기록용 헬퍼 함수
+    function ServerValueTimestamp() {
+      return new Date().getTime();
+    }
+
+    // Realtime Database 데이터 연동 (최근 내역 로드)
     async function loadComplaintHistory() {
       if (!currentUser) return;
       try {
-        // 내 uid에 해당하는 최근 5개의 민원 내역을 정렬하여 가져옴
+        const complaintsRef = ref(db, 'civil_complaints');
+        // 현재 로그인한 사용자의 uid와 일치하는 데이터 최근 5개 조회
         const q = query(
-          collection(db, "civil_complaints"),
-          where("uid", "==", currentUser.uid),
-          orderBy("createdAt", "desc"),
-          limit(5)
+          complaintsRef,
+          orderByChild('uid'),
+          equalTo(currentUser.uid),
+          limitToLast(5)
         );
-        const querySnapshot = await getDocs(q);
         
-        if (querySnapshot.empty) {
+        const snapshot = await get(q);
+        
+        if (!snapshot.exists()) {
           historyList.innerHTML = '<p style="color: #94a3b8; font-size: 14px;">최근 상담 내역이 없습니다.</p>';
           return;
         }
 
         historyList.innerHTML = '';
-        querySnapshot.forEach((doc) => {
-          const item = doc.data();
+        const items = [];
+        
+        snapshot.forEach((childSnapshot) => {
+          items.push(childSnapshot.data ? childSnapshot.data() : childSnapshot.val());
+        });
+        
+        // 최근 순 정렬 (Realtime DB는 역순 정렬 기능이 없어서 배열을 뒤집어 줍니다)
+        items.reverse();
+
+        items.forEach((item) => {
           const div = document.createElement('div');
           div.className = 'history-item';
           div.innerHTML = `
             <div class="history-q">Q. ${escapeHtml(item.question)}</div>
             <div class="history-a">${escapeHtml(item.answer)}</div>
           `;
-          // 클릭 시 해당 기록 복원 기능 추가 (사용자 편의성)
           div.style.cursor = 'pointer';
           div.addEventListener('click', () => {
             questionInput.value = item.question;
@@ -452,13 +461,11 @@
           historyList.appendChild(div);
         });
       } catch (e) {
-        console.error("역사 로드 실패:", e);
+        console.error("기록 로드 실패:", e);
       }
     }
 
-    // ==========================================
-    // 5. TTS 기능 활용하기 (Web Speech API)
-    // ==========================================
+    // TTS 기능
     function speakAnswer() {
       const textToRead = answerBox.textContent;
       if (!textToRead || textToRead.startsWith('원하시는 민원') || textToRead.startsWith('민원 관련')) {
@@ -466,22 +473,18 @@
       }
 
       if ('speechSynthesis' in window) {
-        // 기존 실행 중인 음성이 있으면 취소
         window.speechSynthesis.cancel();
-
         const utterance = new SpeechSynthesisUtterance(textToRead);
-        utterance.lang = 'ko-KR'; // 한국어 설정
-        utterance.rate = 1.0;     // 속도 기본값
-        utterance.pitch = 1.0;    // 음높이 기본값
-
+        utterance.lang = 'ko-KR';
+        utterance.rate = 1.0;    
+        utterance.pitch = 1.0;   
         window.speechSynthesis.speak(utterance);
         statusBox.textContent = '🔊 음성 안내가 출력 중입니다.';
       } else {
-        alert('이 브라우저는 음성 합성(TTS) 기능을 지원하지 않습니다. 크롬 등을 사용해 주세요.');
+        alert('이 브라우저는 음성 합성(TTS) 기능을 지원하지 않습니다.');
       }
     }
 
-    // 기타 보조 함수들
     function setLoading(isLoading) {
       askBtn.disabled = isLoading;
       askBtn.textContent = isLoading ? '조회 중...' : '민원 조회하기';
